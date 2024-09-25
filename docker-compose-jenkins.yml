@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  jenkins:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+    networks:
+      - proxy
+      - jenkins_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.kami-jenkins.rule=Host(`jenkins.aws.kamico.com.br`)"
+      - "traefik.http.routers.kami-jenkins.entrypoints=websecure"
+      - "traefik.http.routers.kami-jenkins.tls.certresolver=myresolver"
+      - "traefik.http.routers.kami-jenkins-www.rule=Host(`www.jenkins.aws.kamico.com.br`)"
+      - "traefik.http.routers.kami-jenkins-www.entrypoints=websecure"
+      - "traefik.http.routers.kami-jenkins-www.tls.certresolver=myresolver"
+      - "traefik.http.services.kami-jenkins.loadbalancer.server.port=8080"
+      - "traefik.http.routers.jenkins-insecure.rule=Host(`jenkins.aws.kamico.com.br`)"
+      - "traefik.http.routers.jenkins-insecure.entrypoints=web"
+
+networks:
+  proxy:
+    external: true
+  jenkins_network:
+    driver: bridge
+
+volumes:
+  jenkins_home:

@@ -1,0 +1,41 @@
+// Arquivo: kami-etl-pipeline.jenkins
+
+pipeline {
+    agent any
+    
+    environment {
+        HOP_HOME = "/opt/hop"
+        PROJECT_HOME = "/opt/projetos/projetos_hop_kami/projeto_hop_kami/"    }
+    
+    stages {
+        stage('Execute Kami ETL Workflows') {
+            steps {
+                script {
+                    def workflows = [
+                        "start_fase1.hwf",
+                        "UNO_workflow_pedidos.hwf",
+                        "egestor_workflow_produto.hwf",
+                        "egestor_workflow_pedidovenda.hwf"
+                    ]
+                    
+                    for (workflow in workflows) {
+                        sh "${HOP_HOME}/hop-run.sh -r local -e DEV -j 'ProjetoETLKami' -f '${PROJECT_HOME}${workflow}' -l INFO"
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        success {
+            emailext body: 'Pipeline Kami ETL executado com sucesso',
+                     subject: 'Sucesso na execução do pipeline Kami ETL',
+                     to: 'guilherme@kamico.com.br'
+        }
+        failure {
+            emailext body: 'Falha na execução do pipeline Kami ETL. Verifique os logs para mais detalhes.',
+                     subject: 'Falha na execução do pipeline Kami ETL',
+                     to: 'guilherme@kamico.com.br'
+        }
+    }
+}
